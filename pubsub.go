@@ -90,7 +90,7 @@ func (pubSubClient PubSubClient) UnSubscribe(event string) {
 }
 
 func throwSpoilers() {
-	fmt.Println("just testing")
+	fmt.Println("1got")
 }
 
 func createPubSubClient() PubSubClient {
@@ -107,6 +107,8 @@ func test() {
 
 	publisher := createPubSubServer()
 
+	publisher1 := createPubSubServer()
+
 	client := createPubSubClient()
 
 	client.Subscribe("gameofthrones", throwSpoilers)
@@ -115,17 +117,23 @@ func test() {
 
 	client2 := createPubSubClient()
 	client2.Subscribe("gameofthrones", func() {
-		fmt.Println("ln")
+		fmt.Println("2got")
+	})
+
+	client2.Subscribe("rickandmorty", func() {
+		fmt.Println("2r&m")
 	})
 
 	publisher.Publish("gameofthrones")
 	publisher.Publish("gameofthrones")
 
+	publisher1.Publish("rickandmorty")
+
 	client.UnSubscribe("gameofthrones")
 
 	publisher.Publish("gameofthrones")
 
-	hang()
+	// hang()
 }
 
 func main() {
