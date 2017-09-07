@@ -39,8 +39,8 @@ func (pubSubClient *PubSubClient) removeChannel(event string) {
 		return
 	}
 	channel := pubSubClient.store[event]
-	delete(pubSubClient.store, event)
 	close(channel)
+	delete(pubSubClient.store, event)
 }
 
 func (pubSubClient *PubSubClient) isInitialised() bool {
@@ -65,25 +65,24 @@ func (pubSubServer PubSubServer) Publish(event string) {
 		pubSubClient := pubSubIdToInstanceMap[id]
 		if pubSubClient.channelExists(event) {
 			channel := pubSubClient.getOrCreateChannel(event)
-			go func() {
-				channel <- 1
-			}()
+			channel <- 1
 		}
 	}
 }
 
-func (pubSubClient PubSubClient) Subscribe(event string, callback callBack) {
-
-	channel := pubSubClient.getOrCreateChannel(event)
-	go func() {
-		for {
-			_, ok := <-channel
-			if !ok {
-				continue
-			}
-			callback()
+func _callOnSignalFire(buffer channel, callback callBack) {
+	for {
+		_, ok := <-buffer
+		if !ok {
+			break
 		}
-	}()
+		callback()
+	}
+}
+
+func (pubSubClient PubSubClient) Subscribe(event string, callback callBack) {
+	channel := pubSubClient.getOrCreateChannel(event)
+	go _callOnSignalFire(channel, callback)
 }
 
 func (pubSubClient PubSubClient) UnSubscribe(event string) {
@@ -112,15 +111,17 @@ func test() {
 
 	client.Subscribe("gameofthrones", throwSpoilers)
 
-	time.Sleep(1000 * time.Millisecond)
-
 	publisher.Publish("gameofthrones")
 
-	time.Sleep(2000 * time.Millisecond)
+	client2 := createPubSubClient()
+	client2.Subscribe("gameofthrones", func() {
+		fmt.Println("ln")
+	})
+
+	publisher.Publish("gameofthrones")
+	publisher.Publish("gameofthrones")
 
 	client.UnSubscribe("gameofthrones")
-
-	time.Sleep(2000 * time.Millisecond)
 
 	publisher.Publish("gameofthrones")
 
@@ -133,5 +134,5 @@ func main() {
 
 func hang() {
 	// hangs the code
-	time.Sleep(10000 * time.Millisecond)
+	time.Sleep(1000 * time.Millisecond)
 }
