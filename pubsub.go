@@ -71,11 +71,7 @@ func (pubSubServer PubSubServer) Publish(event string) {
 }
 
 func _callOnSignalFire(buffer channel, callback callBack) {
-	for {
-		_, ok := <-buffer
-		if !ok {
-			break
-		}
+	for _ = range buffer {
 		callback()
 	}
 }
@@ -133,7 +129,7 @@ func test() {
 
 	publisher.Publish("gameofthrones")
 
-	// hang()
+	hang()
 }
 
 func main() {
