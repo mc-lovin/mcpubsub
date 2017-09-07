@@ -5,7 +5,7 @@ import (
 	"time"
 )
 
-type channel chan int
+type channel chan struct{}
 
 type PubSubServer struct {
 }
@@ -18,6 +18,7 @@ type PubSubClient struct {
 // Shared Data
 var pubSubClientId int = 1
 var pubSubIdToInstanceMap map[int]PubSubClient = make(map[int]PubSubClient)
+var done = make(channel)
 
 // -----------
 
@@ -65,14 +66,26 @@ func (pubSubServer PubSubServer) Publish(event string) {
 		pubSubClient := pubSubIdToInstanceMap[id]
 		if pubSubClient.channelExists(event) {
 			channel := pubSubClient.getOrCreateChannel(event)
-			channel <- 1
+			select {
+			case channel <- struct{}{}:
+			case <-done:
+				return
+			}
 		}
 	}
 }
 
 func _callOnSignalFire(buffer channel, callback callBack) {
-	for _ = range buffer {
-		callback()
+	for {
+		select {
+		case _, ok := <-buffer:
+			if !ok {
+				return
+			}
+			callback()
+		case <-done:
+			return
+		}
 	}
 }
 
@@ -121,6 +134,7 @@ func test() {
 	})
 
 	publisher.Publish("gameofthrones")
+
 	publisher.Publish("gameofthrones")
 
 	publisher1.Publish("rickandmorty")
@@ -133,6 +147,7 @@ func test() {
 }
 
 func main() {
+	defer close(done)
 	test()
 }
 
