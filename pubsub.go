@@ -16,9 +16,11 @@ type PubSubClient struct {
 }
 
 // Shared Data
-var pubSubClientId int = 1
-var pubSubIdToInstanceMap map[int]PubSubClient = make(map[int]PubSubClient)
-var done = make(channel)
+var (
+	pubSubClientId        int                  = 1
+	pubSubIdToInstanceMap map[int]PubSubClient = make(map[int]PubSubClient)
+	done                                       = make(channel)
+)
 
 // -----------
 
