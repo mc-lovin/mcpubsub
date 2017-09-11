@@ -149,8 +149,11 @@ func test() {
 }
 
 func main() {
-	defer close(done)
-	test()
+	//	defer close(done)
+	//	test()
+	pubSubApi := PubSubApi()
+	publisher := pubSubApi.NewPublisher()
+	publisher.publish("as", "As")
 }
 
 func hang() {
