@@ -1,4 +1,4 @@
-/*
+/**
 We will run a server at port PORT
 all communication will go through that server
 
@@ -11,6 +11,7 @@ x.publish() <- will publish to the server
 
 y = newSubscriber()
 y.subscribe() <- will subscribe to the server
+y, topic should be unique pair
 
 x and y are clients are will be given response
 */
@@ -21,34 +22,35 @@ type Func func()
 
 type pubSubApi interface {
 	NewPublisher() publisherApi
-	NewSubscriber(topic string) subscriberApi
-	start()
-}
-
-var (
-	apiInstance pubSubApi
-)
-
-func PubSubApi() pubSubApi {
-	if apiInstance != nil {
-		return apiInstance
-	}
-	apiInstance = pubSubFactory{}
-	apiInstance.start()
-	return apiInstance
+	NewSubscriber() subscriberApi
 }
 
 type pubSubFactory struct {
 	server pubSubServerApi
 }
 
-func (pubSubFactory pubSubFactory) start() {
+func PubSubApi() (pubSubApi, error) {
+	pubSubObj := pubSubFactory{
+		server: pubSubServer{},
+	}
+	return pubSubObj, nil
 }
 
-func (pubSubFactory pubSubFactory) NewPublisher() publisherApi {
-	return newPublisher(pubSubFactory.server)
+func PubSubApiServerStart() (pubSubApi, error) {
+	pubSubObj := pubSubFactory{
+		server: pubSubServer{},
+	}
+	err := pubSubObj.server.start()
+	if err != nil {
+		return nil, err
+	}
+	return pubSubObj, nil
 }
 
-func (pubSubFactory pubSubFactory) NewSubscriber(topic string) subscriberApi {
-	return newSubscriber(pubSubFactory.server)
+func (pubSubObj pubSubFactory) NewPublisher() publisherApi {
+	return newPublisher(pubSubObj.server)
+}
+
+func (pubSubObj pubSubFactory) NewSubscriber() subscriberApi {
+	return newSubscriber(pubSubObj.server)
 }

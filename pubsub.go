@@ -1,6 +1,7 @@
 package main
 
 import (
+	"flag"
 	"fmt"
 	"time"
 )
@@ -151,9 +152,22 @@ func test() {
 func main() {
 	//	defer close(done)
 	//	test()
-	pubSubApi := PubSubApi()
-	publisher := pubSubApi.NewPublisher()
-	publisher.publish("as", "As")
+
+	connect := flag.String("connect", "", "IP addr")
+
+	flag.Parse()
+
+	if *connect != "" {
+		pubSubApi, _ := PubSubApi()
+		publisher := pubSubApi.NewPublisher()
+		publisher.Publish("as", "As")
+
+		subscriber := pubSubApi.NewSubscriber()
+		subscriber.Subscribe("got", func() {})
+	} else {
+		PubSubApiServerStart()
+	}
+
 }
 
 func hang() {
