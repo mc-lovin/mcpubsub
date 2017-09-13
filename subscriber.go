@@ -2,6 +2,8 @@ package main
 
 import (
 	"bufio"
+	"errors"
+	"fmt"
 	"log"
 )
 
@@ -17,23 +19,16 @@ type subscriber struct {
 }
 
 var (
-	subscriberId                    = 1
-	SUBSCRIBER_ADDED_MESSAGE        = "SUBSCRIBER ADDED"
-	SUBSCRIBER_SUBSCRIBED_MESSAGE   = "SUBSCRIBER SUBSCRIBED"
-	SUBSCRIBER_UNSUBSCRIBED_MESSAGE = "SUBSCRIBER UNSUBSCRIBED"
+	subscriberId                                    = 1
+	subscriptionMap map[string]map[*subscriber]bool = make(map[string]map[*subscriber]bool)
 )
 
-func newSubscriber(server pubSubServerApi) subscriberApi {
-	rw, err := server.newRW()
-	if err != nil {
-		log.Println("Error while creating subscriber")
-		return nil
-	}
-	subscriberObj := subscriber{
+func newSubscriber(rw *bufio.ReadWriter) subscriberApi {
+	subscriberObj := &subscriber{
 		rw: rw,
 	}
 
-	err = sendMessage(subscriberObj.rw, serverMessage{
+	err := sendMessage(subscriberObj.rw, serverMessage{
 		Class: SUBSCRIBER_ADDED_MESSAGE,
 	})
 
@@ -41,7 +36,7 @@ func newSubscriber(server pubSubServerApi) subscriberApi {
 		log.Println("Error while creating subscriber")
 	}
 
-	message, err := receiveMessage(rw)
+	message := <-channelMap[SUBSCRIBER_ADDED_MESSAGE]
 
 	if err != nil {
 		log.Println("Error while creating publisher")
@@ -50,49 +45,65 @@ func newSubscriber(server pubSubServerApi) subscriberApi {
 
 	subscriberObj.id = message.Id
 	subscriberObj.callBackMap = make(map[string]Func)
-
-	go subscriberObj.handleMessage(rw)
 	return subscriberObj
 }
 
-func (subscriberObj subscriber) handleMessage(rw *bufio.ReadWriter) {
-	for {
-		message, err := receiveMessage(rw)
-		if err != nil {
-			log.Println("error occured while subscriber recieving")
-			return
-		}
-		callback := subscriberObj.callBackMap[message.Topic]
-		callback()
-		log.Print("message received in client ", message, subscriberObj.id)
-	}
+func (subscriberObj *subscriber) handleMessage(message serverMessage) {
+	callback := subscriberObj.callBackMap[message.Topic]
+	callback()
+	log.Print("message received in client ", message, subscriberObj.id)
 }
 
-func (subscriberObj subscriber) Subscribe(topic string, callback Func) error {
-	err := sendMessage(subscriberObj.rw, serverMessage{
+func (subscriberObj *subscriber) Subscribe(topic string, callback Func) error {
+	subscriberObj.callBackMap[topic] = callback
+	fmt.Println("We are here inside last thing", subscriberObj.callBackMap)
+	subscriberObj.addStream(serverMessage{
 		Id:    subscriberObj.id,
 		Class: SUBSCRIBER_SUBSCRIBED_MESSAGE,
 		Topic: topic,
 	})
-
-	if err != nil {
-		log.Println("Error while subscribing")
-	}
-
-	subscriberObj.callBackMap[topic] = callback
-	return err
+	return nil
 }
 
-func (subscriberObj subscriber) UnSubscribe(topic string) error {
-	err := sendMessage(subscriberObj.rw, serverMessage{
+func (subscriberObj *subscriber) UnSubscribe(topic string) error {
+	subscriberObj.removeStream(serverMessage{
 		Id:    subscriberObj.id,
 		Class: SUBSCRIBER_UNSUBSCRIBED_MESSAGE,
 		Topic: topic,
 	})
-
-	if err != nil {
-		log.Println("Error while subscribing")
-	}
 	delete(subscriberObj.callBackMap, topic)
-	return err
+	return nil
+}
+
+func (subscriberObj *subscriber) addStream(message serverMessage) (err error) {
+	topic := message.Topic
+	_, ok := subscriptionMap[topic]
+	if !ok {
+		subscriptionMap[topic] = make(map[*subscriber]bool)
+	}
+
+	if hasElement(subscriptionMap[topic], *subscriberObj) {
+		return errors.New("Subscription already exists")
+	}
+
+	fmt.Println("rockon", subscriberObj)
+
+	subscriptionMap[topic][subscriberObj] = true
+	return nil
+}
+
+func (subscriberObj *subscriber) removeStream(message serverMessage) (err error) {
+	topic := message.Topic
+
+	if !hasElement(subscriptionMap[topic], *subscriberObj) {
+		return errors.New("No subscription exists")
+	}
+
+	delete(subscriptionMap[topic], subscriberObj)
+	return nil
+}
+
+func hasElement(subscriptions map[*subscriber]bool, subscriberObj subscriber) bool {
+	_, ok := subscriptions[&subscriberObj]
+	return ok
 }

@@ -12,9 +12,9 @@ import (
 var (
 	PORT = ":14610"
 	// Tells which streams to publish
-	subscriptionMap map[string]map[int]bool   = make(map[string]map[int]bool)
-	subStreamMap    map[int]*bufio.ReadWriter = make(map[int]*bufio.ReadWriter)
-	pubStreamMap    map[int]*bufio.ReadWriter = make(map[int]*bufio.ReadWriter)
+	subStreamMap map[int]*bufio.ReadWriter = make(map[int]*bufio.ReadWriter)
+	pubStreamMap map[int]*bufio.ReadWriter = make(map[int]*bufio.ReadWriter)
+	streams      []*bufio.ReadWriter       = make([]*bufio.ReadWriter, 0)
 )
 
 type pubSubServerApi interface {
@@ -63,8 +63,9 @@ func (server pubSubServer) newRW() (*bufio.ReadWriter, error) {
 		return nil, err
 	}
 	fmt.Println("New client added")
-	return bufio.NewReadWriter(bufio.NewReader(conn),
-		bufio.NewWriter(conn)), nil
+	rw := bufio.NewReadWriter(bufio.NewReader(conn),
+		bufio.NewWriter(conn))
+	return rw, nil
 }
 
 func (server pubSubServer) start() error {
@@ -103,22 +104,29 @@ func handleConnection(conn net.Conn) {
 func handleRequestMessage(message serverMessage, rw *bufio.ReadWriter) {
 	var err error = nil
 	switch message.Class {
+	case ADD_CLIENT_MESSAGE:
+		streams = append(streams, rw)
+		fmt.Println("added streams ", streams)
 	case PUBLISHER_ADDED_MESSAGE:
 		message.Id = publisherId
 		pubStreamMap[publisherId] = rw
 		publisherId++
 		err = sendMessage(rw, message)
 	case PUBLISHER_PUBLISHED_MESSAGE:
-		broadCastMessage(message)
+		log.Println("publisher published ", streams)
+		for idx, stream := range streams {
+			log.Println(idx, stream)
+			sendMessage(stream, message)
+		}
 	case SUBSCRIBER_ADDED_MESSAGE:
 		message.Id = subscriberId
 		subStreamMap[subscriberId] = rw
 		subscriberId++
 		err = sendMessage(rw, message)
 	case SUBSCRIBER_SUBSCRIBED_MESSAGE:
-		addStream(message)
+		return
 	case SUBSCRIBER_UNSUBSCRIBED_MESSAGE:
-		removeStream(message)
+		return
 	default:
 		log.Println("Unrecognised Message")
 	}
@@ -126,58 +134,4 @@ func handleRequestMessage(message serverMessage, rw *bufio.ReadWriter) {
 	if err != nil {
 		log.Println("Problem dealing with serverMessage", message)
 	}
-}
-
-func broadCastMessage(message serverMessage) (err error) {
-
-	if message.Id == 0 {
-		return errors.New("Invalid Message, Id is null")
-	}
-
-	streams, ok := subscriptionMap[message.Topic]
-	if !ok {
-		log.Println("No subscribers yet for ", message)
-		return nil
-	}
-
-	for subId := range streams {
-		log.Println("Sending ", subId, message.Message)
-		sendMessage(subStreamMap[subId], message)
-	}
-
-	return nil
-
-}
-
-func addStream(message serverMessage) (err error) {
-	topic := message.Topic
-	id := message.Id
-	_, ok := subscriptionMap[topic]
-	if !ok {
-		subscriptionMap[topic] = make(map[int]bool)
-	}
-
-	if hasElement(subscriptionMap[topic], id) {
-		return errors.New("Subscription already exists")
-	}
-
-	subscriptionMap[topic][id] = true
-	return nil
-}
-
-func removeStream(message serverMessage) (err error) {
-	topic := message.Topic
-	id := message.Id
-
-	if !hasElement(subscriptionMap[topic], id) {
-		return errors.New("No subscription exists")
-	}
-
-	delete(subscriptionMap[topic], id)
-	return nil
-}
-
-func hasElement(subscriptions map[int]bool, id int) bool {
-	_, ok := subscriptions[id]
-	return ok
 }

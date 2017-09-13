@@ -16,30 +16,26 @@ type publisher struct {
 }
 
 var (
-	publisherId                 = 1
-	PUBLISHER_ADDED_MESSAGE     = "PUBLISHER ADDED"
-	PUBLISHER_PUBLISHED_MESSAGE = "PUBLISHER PUBLISHED"
+	publisherId = 1
 )
 
-func newPublisher(server pubSubServerApi) publisherApi {
-	rw, err := server.newRW()
-	if err != nil {
-		log.Println("Error while creating publisher")
-		return nil
-	}
+func newPublisher(rw *bufio.ReadWriter) publisherApi {
 	publisherObj := publisher{
 		rw: rw,
 	}
 
-	err = sendMessage(publisherObj.rw, serverMessage{
+	err := sendMessage(publisherObj.rw, serverMessage{
 		Class: PUBLISHER_ADDED_MESSAGE,
 	})
 	if err != nil {
 		log.Println("Error while creating publisher")
 		return nil
 	}
+	fmt.Println("waiting for mesage")
 
-	message, err := receiveMessage(rw)
+	message := <-channelMap[PUBLISHER_ADDED_MESSAGE]
+
+	fmt.Println("waiting over")
 
 	if err != nil {
 		log.Println("Error while creating publisher")
