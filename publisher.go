@@ -2,6 +2,7 @@ package main
 
 import (
 	"bufio"
+	"fmt"
 	"log"
 )
 
@@ -28,17 +29,25 @@ func newPublisher(server pubSubServerApi) publisherApi {
 	}
 	publisherObj := publisher{
 		rw: rw,
-		id: publisherId,
 	}
-	publisherId++
 
 	err = sendMessage(publisherObj.rw, serverMessage{
-		Id:    publisherObj.id,
 		Class: PUBLISHER_ADDED_MESSAGE,
 	})
 	if err != nil {
 		log.Println("Error while creating publisher")
+		return nil
 	}
+
+	message, err := receiveMessage(rw)
+
+	if err != nil {
+		log.Println("Error while creating publisher")
+		return nil
+	}
+
+	publisherObj.id = message.Id
+	fmt.Println(publisherObj)
 	return publisherObj
 }
 

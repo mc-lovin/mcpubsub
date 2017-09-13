@@ -11,8 +11,9 @@ type subscriberApi interface {
 }
 
 type subscriber struct {
-	id int
-	rw *bufio.ReadWriter
+	id          int
+	rw          *bufio.ReadWriter
+	callBackMap map[string]Func
 }
 
 var (
@@ -30,19 +31,41 @@ func newSubscriber(server pubSubServerApi) subscriberApi {
 	}
 	subscriberObj := subscriber{
 		rw: rw,
-		id: subscriberId,
 	}
-	subscriberId++
 
 	err = sendMessage(subscriberObj.rw, serverMessage{
-		Id:    subscriberObj.id,
 		Class: SUBSCRIBER_ADDED_MESSAGE,
 	})
 
 	if err != nil {
 		log.Println("Error while creating subscriber")
 	}
+
+	message, err := receiveMessage(rw)
+
+	if err != nil {
+		log.Println("Error while creating publisher")
+		return nil
+	}
+
+	subscriberObj.id = message.Id
+	subscriberObj.callBackMap = make(map[string]Func)
+
+	go subscriberObj.handleMessage(rw)
 	return subscriberObj
+}
+
+func (subscriberObj subscriber) handleMessage(rw *bufio.ReadWriter) {
+	for {
+		message, err := receiveMessage(rw)
+		if err != nil {
+			log.Println("error occured while subscriber recieving")
+			return
+		}
+		callback := subscriberObj.callBackMap[message.Topic]
+		callback()
+		log.Print("message received in client ", message, subscriberObj.id)
+	}
 }
 
 func (subscriberObj subscriber) Subscribe(topic string, callback Func) error {
@@ -55,6 +78,8 @@ func (subscriberObj subscriber) Subscribe(topic string, callback Func) error {
 	if err != nil {
 		log.Println("Error while subscribing")
 	}
+
+	subscriberObj.callBackMap[topic] = callback
 	return err
 }
 
@@ -68,5 +93,6 @@ func (subscriberObj subscriber) UnSubscribe(topic string) error {
 	if err != nil {
 		log.Println("Error while subscribing")
 	}
+	delete(subscriberObj.callBackMap, topic)
 	return err
 }
