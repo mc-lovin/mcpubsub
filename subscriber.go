@@ -33,13 +33,13 @@ func newSubscriber(rw *bufio.ReadWriter) subscriberApi {
 	})
 
 	if err != nil {
-		log.Println("Error while creating subscriber")
+		log.Println("Error while creating subscriber.")
 	}
 
 	message := <-channelMap[SUBSCRIBER_ADDED_MESSAGE]
 
 	if err != nil {
-		log.Println("Error while creating publisher")
+		log.Println("Error while creating publisher.")
 		return nil
 	}
 
@@ -50,13 +50,11 @@ func newSubscriber(rw *bufio.ReadWriter) subscriberApi {
 
 func (subscriberObj *subscriber) handleMessage(message serverMessage) {
 	callback := subscriberObj.callBackMap[message.Topic]
-	callback()
-	log.Print("message received in client ", message, subscriberObj.id)
+	callback(message.Message)
 }
 
 func (subscriberObj *subscriber) Subscribe(topic string, callback Func) error {
 	subscriberObj.callBackMap[topic] = callback
-	fmt.Println("We are here inside last thing", subscriberObj.callBackMap)
 	subscriberObj.addStream(serverMessage{
 		Id:    subscriberObj.id,
 		Class: SUBSCRIBER_SUBSCRIBED_MESSAGE,
@@ -83,12 +81,11 @@ func (subscriberObj *subscriber) addStream(message serverMessage) (err error) {
 	}
 
 	if hasElement(subscriptionMap[topic], *subscriberObj) {
-		return errors.New("Subscription already exists")
+		return errors.New("Subscription already exists.")
 	}
 
-	fmt.Println("rockon", subscriberObj)
-
 	subscriptionMap[topic][subscriberObj] = true
+	fmt.Println("topic ", topic, subscriberObj, subscriptionMap)
 	return nil
 }
 
@@ -96,7 +93,7 @@ func (subscriberObj *subscriber) removeStream(message serverMessage) (err error)
 	topic := message.Topic
 
 	if !hasElement(subscriptionMap[topic], *subscriberObj) {
-		return errors.New("No subscription exists")
+		return errors.New("No subscription exists.")
 	}
 
 	delete(subscriptionMap[topic], subscriberObj)

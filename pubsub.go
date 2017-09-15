@@ -3,58 +3,45 @@ package main
 import (
 	"flag"
 	"fmt"
+	"log"
 	"time"
 )
 
 func main() {
-	//	defer close(done)
-	//	test()
-
-	connect := flag.String("connect", "", "IP addr")
-
+	runServer := flag.Bool("runserver", false, "run a server")
 	flag.Parse()
 
-	if *connect != "" {
-		pubSubApi, _ := PubSubApi()
+	if *runServer {
+		_, err := PubSubApiServerStart()
+		if err != nil {
+			log.Println("Error in starting server.")
+		}
+	} else {
+		pubSubApi, err := PubSubApi()
+		if err != nil {
+			log.Println("Error in listening.")
+			return
+		}
 		publisher := pubSubApi.NewPublisher()
-		// Print publisher and see the log, interesting right.
-
 		subscriber := pubSubApi.NewSubscriber()
 
-		subscriber.Subscribe("got", func() {
-			fmt.Println("in the callback")
+		subscriber.Subscribe("got", func(message string) {
+			fmt.Println("Game of thrones: ", message)
+		})
+		publisher.Publish("got", "All hail Lord Baelish")
+
+		subscriber.Subscribe("r&m", func(message string) {
+			fmt.Println("Rick and Morty", message)
 		})
 
-		fmt.Println(subscriber)
-
-		publisher.Publish("got", "As1")
-
-		//		time.Sleep(1000 * time.Millisecond)
-
-		// we have some latency issues over here
-
+		time.Sleep(time.Millisecond)
 		subscriber.UnSubscribe("got")
-
-		/*
-
-			subscriber1 := pubSubApi.NewSubscriber()
-			subscriber1.Subscribe("got", func() {
-				fmt.Println("in the callback1")
-			})
-
-			publisher.Publish("got", "As2")
-		*/
-		fmt.Println("--->", publisher, subscriber)
-
-	} else {
-		PubSubApiServerStart()
+		publisher.Publish("r&m", "Dabba wabba doo")
+		publisher.Publish("got", "All hail Lord Baelish")
 	}
-
 	hang()
-
 }
 
 func hang() {
-	// hangs the code
 	time.Sleep(10000 * time.Millisecond)
 }

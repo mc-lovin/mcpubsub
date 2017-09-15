@@ -2,7 +2,6 @@ package main
 
 import (
 	"bufio"
-	"fmt"
 	"log"
 )
 
@@ -28,22 +27,18 @@ func newPublisher(rw *bufio.ReadWriter) publisherApi {
 		Class: PUBLISHER_ADDED_MESSAGE,
 	})
 	if err != nil {
-		log.Println("Error while creating publisher")
+		log.Println("Error while creating publisher.")
 		return nil
 	}
-	fmt.Println("waiting for mesage")
 
 	message := <-channelMap[PUBLISHER_ADDED_MESSAGE]
 
-	fmt.Println("waiting over")
-
 	if err != nil {
-		log.Println("Error while creating publisher")
+		log.Println("Error while creating publisher.")
 		return nil
 	}
 
 	publisherObj.id = message.Id
-	fmt.Println(publisherObj)
 	return publisherObj
 }
 

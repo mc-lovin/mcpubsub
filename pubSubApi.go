@@ -1,21 +1,3 @@
-/**
-We will run a server at port PORT
-all communication will go through that server
-
-e.g.
-
-Start ()
-
-x = newPublisher()
-x.publish() <- will publish to the server
-
-y = newSubscriber()
-y.subscribe() <- will subscribe to the server
-y, topic should be unique pair
-
-x and y are clients are will be given response
-*/
-
 package main
 
 import (
@@ -24,7 +6,7 @@ import (
 	"log"
 )
 
-type Func func()
+type Func func(string)
 
 type pubSubApi interface {
 	NewPublisher() publisherApi
@@ -38,17 +20,26 @@ type pubSubFactory struct {
 
 func PubSubApi() (pubSubApi, error) {
 	initChannelMap()
+
 	server := pubSubServer{}
-	rw, _ := server.newRW()
+	rw, err := server.newRW()
+	if err != nil {
+		log.Println("Error in starting service", err)
+		return nil, err
+	}
+
 	go listener(rw)
 	go broadCaster()
+
 	sendMessage(rw, serverMessage{
 		Class: ADD_CLIENT_MESSAGE,
 	})
+
 	pubSubObj := pubSubFactory{
 		server: server,
 		rw:     rw,
 	}
+
 	return pubSubObj, nil
 }
 
@@ -56,10 +47,9 @@ func listener(rw *bufio.ReadWriter) {
 	for {
 		message, err := receiveMessage(rw)
 		if err != nil {
-			log.Println("not able to receive messages atm")
+			log.Println("Not able to receive messages.", err)
 			return
 		}
-		log.Println("in listener", message)
 		channelMap[message.Class] <- message
 	}
 }
@@ -73,18 +63,19 @@ func broadCaster() {
 
 func broadCastMessage(message serverMessage) (err error) {
 
+	log.Println("Broadcasting message", message)
+
 	if message.Id == 0 {
-		return errors.New("Invalid Message, Id is null")
+		return errors.New("Invalid Message, Id is null.")
 	}
 
 	streams, ok := subscriptionMap[message.Topic]
+	log.Println(message, streams, ok)
 	if !ok {
-		log.Println("No subscribers yet for ", message)
 		return nil
 	}
 
 	for subscriber := range streams {
-		log.Println("Sending ", subscriber, message.Message)
 		_, ok = subscriber.callBackMap[message.Topic]
 		if !ok {
 			continue
