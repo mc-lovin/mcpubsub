@@ -1,32 +1,38 @@
 Simple PUB-SUB implementation in go
 
-Design
-======
+Usage
+=====
 
-Subscription is topic based
-Usage:
+Installation
+`go get -v github.com/mc-lovin/mcpubsub`
 
+Import `github.com/mc-lovin/mcpubsub`
+
+
+Run a server using
+`mcpubsub.PubSubApiServerStart()`
+
+Run a pub sub client using
+`pubSub := mcpubsub.PubSubApi()`
 
 Publisher
 
 ```
-publisher := PubSubServer{}
-publisher.publish(topicName, context)
+publisher := pubSubApi.NewPublisher()
+publisher.publish(topicName)
 ```
 
 Subscriber
 
 ```
-subscriber := PubSubClient{}
-subscriber.subscribe(topicName, callback) 
+subscriber := pubSubApi.NewSubscriber()
+subscriber.subscribe(topicName, callback)
 subsrciber.unsubscribe(topicName)
 
 ```
 
+callBack has to be of the type `func(string) {}`
 
-Requriements
-------------
-1. publisher should be able to pass context to subscriber
-2. publisher should be able to publish more than one events at ease.
-3. subscriber should be able to subscribe to more than one events at ease
-4. For the initial phase lets start with one publisher and multiple subscribers
+Once connected all the clients would be able to publish messages across the network
+
+See `test/pubsub.go` for more understanding
