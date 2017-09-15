@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log"
 	"time"
+	"github.com/mc-lovin/mcpubsub"
 )
 
 func main() {
@@ -12,12 +13,12 @@ func main() {
 	flag.Parse()
 
 	if *runServer {
-		_, err := PubSubApiServerStart()
+		_, err := mcpubsub.PubSubApiServerStart()
 		if err != nil {
 			log.Println("Error in starting server.")
 		}
 	} else {
-		pubSubApi, err := PubSubApi()
+		pubSubApi, err := mcpubsub.PubSubApi()
 		if err != nil {
 			log.Println("Error in listening.")
 			return

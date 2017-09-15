@@ -1,4 +1,4 @@
-package main
+package mcpubsub
 
 const (
 	ADD_CLIENT_MESSAGE              = "CLIENT ADDED"
