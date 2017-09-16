@@ -1,13 +1,13 @@
 package mcpubsub
 
 const (
-	ADD_CLIENT_MESSAGE              = "CLIENT ADDED"
-	PUBLISHER_ADDED_MESSAGE         = "PUBLISHER ADDED"
-	PUBLISHER_PUBLISHED_MESSAGE     = "PUBLISHER PUBLISHED"
-	SUBSCRIBER_ADDED_MESSAGE        = "SUBSCRIBER ADDED"
-	SUBSCRIBER_SUBSCRIBED_MESSAGE   = "SUBSCRIBER SUBSCRIBED"
-	SUBSCRIBER_UNSUBSCRIBED_MESSAGE = "SUBSCRIBER UNSUBSCRIBED"
-	chanLen                         = 1
+	addClientMessage              = "CLIENT ADDED"
+	publisherAddedMessage         = "PUBLISHER ADDED"
+	publisherPublishedMessage     = "PUBLISHER PUBLISHED"
+	subscriberAddedMessage        = "SUBSCRIBER ADDED"
+	subscriberSubscribedMessage   = "SUBSCRIBER SUBSCRIBED"
+	subscriberUnsubscribedMessage = "SUBSCRIBER UNSUBSCRIBED"
+	chanLen                       = 1
 )
 
 var (
@@ -15,9 +15,9 @@ var (
 )
 
 func initChannelMap() {
-	channelMap[PUBLISHER_ADDED_MESSAGE] = make(chan serverMessage, chanLen)
-	channelMap[PUBLISHER_PUBLISHED_MESSAGE] = make(chan serverMessage, chanLen)
-	channelMap[SUBSCRIBER_ADDED_MESSAGE] = make(chan serverMessage, chanLen)
-	channelMap[SUBSCRIBER_SUBSCRIBED_MESSAGE] = make(chan serverMessage, chanLen)
-	channelMap[SUBSCRIBER_UNSUBSCRIBED_MESSAGE] = make(chan serverMessage, chanLen)
+	channelMap[publisherAddedMessage] = make(chan serverMessage, chanLen)
+	channelMap[publisherPublishedMessage] = make(chan serverMessage, chanLen)
+	channelMap[subscriberAddedMessage] = make(chan serverMessage, chanLen)
+	channelMap[subscriberSubscribedMessage] = make(chan serverMessage, chanLen)
+	channelMap[subscriberUnsubscribedMessage] = make(chan serverMessage, chanLen)
 }

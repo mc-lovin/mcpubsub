@@ -24,14 +24,14 @@ func newPublisher(rw *bufio.ReadWriter) publisherApi {
 	}
 
 	err := sendMessage(publisherObj.rw, serverMessage{
-		Class: PUBLISHER_ADDED_MESSAGE,
+		Class: publisherAddedMessage,
 	})
 	if err != nil {
 		log.Println("Error while creating publisher.")
 		return nil
 	}
 
-	message := <-channelMap[PUBLISHER_ADDED_MESSAGE]
+	message := <-channelMap[publisherAddedMessage]
 
 	if err != nil {
 		log.Println("Error while creating publisher.")
@@ -45,7 +45,7 @@ func newPublisher(rw *bufio.ReadWriter) publisherApi {
 func (publisherObj publisher) Publish(topic string, message string) error {
 	err := sendMessage(publisherObj.rw, serverMessage{
 		Id:      publisherObj.id,
-		Class:   PUBLISHER_PUBLISHED_MESSAGE,
+		Class:   publisherPublishedMessage,
 		Topic:   topic,
 		Message: message,
 	})

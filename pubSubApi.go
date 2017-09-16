@@ -32,7 +32,7 @@ func PubSubApi() (pubSubApi, error) {
 	go broadCaster()
 
 	sendMessage(rw, serverMessage{
-		Class: ADD_CLIENT_MESSAGE,
+		Class: addClientMessage,
 	})
 
 	pubSubObj := pubSubFactory{
@@ -56,7 +56,7 @@ func listener(rw *bufio.ReadWriter) {
 
 func broadCaster() {
 	for {
-		message := <-channelMap[PUBLISHER_PUBLISHED_MESSAGE]
+		message := <-channelMap[publisherPublishedMessage]
 		broadCastMessage(message)
 	}
 }

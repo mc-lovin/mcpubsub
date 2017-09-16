@@ -8,12 +8,15 @@ Installation
 
 Import `github.com/mc-lovin/mcpubsub`
 
-
 Run a server using
-`mcpubsub.PubSubApiServerStart()`
+```
+mcpubsub.PubSubApiServerStart()
+```
 
 Run a pub sub client using
-`pubSub := mcpubsub.PubSubApi()`
+```
+pubSubApi := mcpubsub.PubSubApi()
+```
 
 Publisher
 
@@ -31,8 +34,9 @@ subsrciber.unsubscribe(topicName)
 
 ```
 
-callBack has to be of the type `func(string) {}`
+`callBack` will accept one `string` as an argument which is going to be
+the `message`
 
 Once connected all the clients would be able to publish messages across the network
 
-See `test/pubsub.go` for more understanding
+See `test/pubsub.go` for a full example

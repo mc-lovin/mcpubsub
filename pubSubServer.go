@@ -100,13 +100,13 @@ func handleRequestMessage(message serverMessage, rw *bufio.ReadWriter) {
 	var err error = nil
 	log.Println("Handling message", message)
 	switch message.Class {
-	case ADD_CLIENT_MESSAGE:
+	case addClientMessage:
 		streams = append(streams, rw)
-	case PUBLISHER_ADDED_MESSAGE:
+	case publisherAddedMessage:
 		message.Id = publisherId
 		publisherId++
 		err = sendMessage(rw, message)
-	case PUBLISHER_PUBLISHED_MESSAGE:
+	case publisherPublishedMessage:
 		for idx, stream := range streams {
 			log.Println(idx, stream)
 
@@ -115,13 +115,13 @@ func handleRequestMessage(message serverMessage, rw *bufio.ReadWriter) {
 				log.Println("Bad stream can't write.")
 			}
 		}
-	case SUBSCRIBER_ADDED_MESSAGE:
+	case subscriberAddedMessage:
 		message.Id = subscriberId
 		subscriberId++
 		err = sendMessage(rw, message)
-	case SUBSCRIBER_SUBSCRIBED_MESSAGE:
+	case subscriberSubscribedMessage:
 		return
-	case SUBSCRIBER_UNSUBSCRIBED_MESSAGE:
+	case subscriberUnsubscribedMessage:
 		return
 	default:
 		log.Println("Unrecognised message.")

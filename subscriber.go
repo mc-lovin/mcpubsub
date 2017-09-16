@@ -29,14 +29,14 @@ func newSubscriber(rw *bufio.ReadWriter) subscriberApi {
 	}
 
 	err := sendMessage(subscriberObj.rw, serverMessage{
-		Class: SUBSCRIBER_ADDED_MESSAGE,
+		Class: subscriberAddedMessage,
 	})
 
 	if err != nil {
 		log.Println("Error while creating subscriber.")
 	}
 
-	message := <-channelMap[SUBSCRIBER_ADDED_MESSAGE]
+	message := <-channelMap[subscriberAddedMessage]
 
 	if err != nil {
 		log.Println("Error while creating publisher.")
@@ -57,7 +57,7 @@ func (subscriberObj *subscriber) Subscribe(topic string, callback Func) error {
 	subscriberObj.callBackMap[topic] = callback
 	subscriberObj.addStream(serverMessage{
 		Id:    subscriberObj.id,
-		Class: SUBSCRIBER_SUBSCRIBED_MESSAGE,
+		Class: subscriberSubscribedMessage,
 		Topic: topic,
 	})
 	return nil
@@ -66,7 +66,7 @@ func (subscriberObj *subscriber) Subscribe(topic string, callback Func) error {
 func (subscriberObj *subscriber) UnSubscribe(topic string) error {
 	subscriberObj.removeStream(serverMessage{
 		Id:    subscriberObj.id,
-		Class: SUBSCRIBER_UNSUBSCRIBED_MESSAGE,
+		Class: subscriberUnsubscribedMessage,
 		Topic: topic,
 	})
 	delete(subscriberObj.callBackMap, topic)
